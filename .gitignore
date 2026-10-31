@@ -1,0 +1,10 @@
+.env
+pessoas/
+rostos.npz
+saudacoes/
+dados/
+expressoes/
+mascote.png
+falas.json
+__pycache__/
+*.tmp

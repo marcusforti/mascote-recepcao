@@ -1,0 +1,4 @@
+uniface==4.1.0
+opencv-python
+numpy
+pillow

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{NOME}} ao vivo</title>
+<style>
+:root{--red:#C8102E;--ok:#4fd27a;--tx:#f4efe8;--vidro:#151213e6;--ln:#ffffff24}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b090a;color:var(--tx);font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden}
+#sheep{position:absolute;inset:0;background:#0b090a;overflow:hidden}
+#sheep img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .45s ease}
+#sheep img.on{opacity:1}
+#cam{position:absolute;left:calc(100vw - 344px);top:24px;width:320px;height:180px;background:#000;border-radius:14px;overflow:hidden;border:2px solid var(--ln);box-shadow:0 12px 40px #000a;z-index:5;cursor:grab;touch-action:none;user-select:none}
+#cam.movendo{cursor:grabbing}
+video,#c{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+video{transform:scaleX(-1);pointer-events:none}
+#c{pointer-events:none}
+#alca{position:absolute;right:0;bottom:0;width:34px;height:34px;cursor:nwse-resize;background:linear-gradient(135deg,#0000 55%,var(--red) 55%);z-index:2;touch-action:none}
+#cam:hover{border-color:var(--red)}
+body[data-modo=camera] #cam{inset:0!important;width:100%!important;height:100%!important;border:0;border-radius:0;cursor:default;z-index:1}
+body[data-modo=camera] #alca{display:none}
+body[data-modo=camera] #sheep{inset:24px 24px auto auto;width:320px;height:180px;border-radius:14px;border:2px solid var(--ln);z-index:5;cursor:pointer}
+body[data-modo=camera] #sheep:hover{border-color:var(--red)}
+body[data-modo=so] #cam{width:2px!important;height:2px!important;opacity:0;pointer-events:none;border:0}
+#fala{transition:bottom .25s;position:absolute;left:50%;bottom:92px;transform:translateX(-50%);width:min(1100px,92vw);text-align:center;font-size:clamp(22px,3vw,40px);font-weight:700;line-height:1.25;text-shadow:0 2px 14px #000,0 0 3px #000;z-index:6;min-height:2.5em;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+#doca{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;padding:7px;background:var(--vidro);border:1px solid var(--ln);border-radius:16px;z-index:8;transition:opacity .25s,transform .25s;max-width:calc(100vw - 24px);box-shadow:0 10px 30px #0008}
+body.semdoca #doca{opacity:0;transform:translate(-50%,14px);pointer-events:none}
+body.semdoca #fala{bottom:34px}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:7}
+#flash.on{animation:flash .4s ease-out}
+@keyframes flash{0%{opacity:.75}100%{opacity:0}}
+#doca button.clicou{animation:clicou .45s ease-out}
+@keyframes clicou{0%,50%{background:#fff;color:#111}25%,75%{background:var(--red);color:#fff}}
+body.quieto{cursor:none}
+#doca button,#doca select{height:40px;background:transparent;color:var(--tx);border:0;border-radius:10px;padding:0 13px;font:600 14px "Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
+#doca button:hover,#doca select:hover{background:#ffffff1a}
+#doca button:active{transform:scale(.96)}
+#doca button:focus-visible,#doca select:focus-visible{outline:2px solid var(--tx);outline-offset:1px}
+#doca button.on{background:var(--red)}
+#doca button:disabled{opacity:.55;cursor:wait}
+#doca select{max-width:190px;text-overflow:ellipsis}
+#doca select option{background:#151213;color:var(--tx)}
+.grupo{display:flex;gap:2px;background:#ffffff0d;border-radius:12px;padding:2px}
+.sep{width:1px;height:24px;background:var(--ln);flex-shrink:0}
+#pessoa{position:absolute;left:20px;top:20px;z-index:6;display:none;align-items:center;gap:8px;padding:7px 14px;background:var(--vidro);border:1px solid var(--ln);border-radius:99px;font-size:15px;font-weight:600}
+#pessoa.on{display:flex}
+#pessoa i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+#aviso{position:absolute;left:50%;top:20px;transform:translateX(-50%);z-index:9;background:#3a2c08f2;color:#ffd978;border:1px solid #6b5416;border-radius:12px;padding:9px 16px;font-size:14px;font-weight:600;display:none}
+#aviso.on{display:block}
+</style>
+</head>
+<body data-modo="canto">
+<div id="sheep" title="Trocar"><img id="a" alt="{{NOME}}"><img id="b" alt=""></div>
+<div id="cam" title="Arraste para mover. Dois cliques: câmera 100%."><video id="v" autoplay playsinline muted></video><canvas id="c"></canvas><div id="alca" title="Arraste para mudar o tamanho"></div></div>
+<div id="pessoa"><i></i><span id="pessoaNome"></span></div>
+<div id="aviso"></div>
+<div id="flash"></div>
+<div id="fala"></div>
+<div id="doca">
+  <div class="grupo"><button data-m="canto" title="Tecla 1">Canto</button><button data-m="camera" title="Tecla 2">Câmera 100%</button><button data-m="so" title="Tecla 3">Só a {{NOME}}</button></div>
+  <span class="sep"></span>
+  <select id="cams" title="Escolher a câmera"><option>abrindo…</option></select>
+  <span class="sep"></span>
+  <button id="ver" title="Manda um quadro para ela descrever">O que está vendo?</button>
+  <button id="chegada" title="Repete as 3 falas de quem está na frente (tecla C)">Simular chegada</button>
+  <button id="papo" title="Liga o agente de voz com quem está na frente (tecla T)">Conversar</button>
+  <span class="sep"></span>
+  <button id="som" title="Voz da {{NOME}}">Som</button>
+  <button id="cheia" title="Tecla F">Tela cheia</button>
+</div>
+<script src="/convai.js"></script>
+<script>
+const $=i=>document.getElementById(i),v=$('v'),c=$('c'),ctx=c.getContext('2d'),sel=$('cams'),grab=document.createElement('canvas'),cam=$('cam');
+const EXPR=['neutra','feliz','rindo','surpresa','pensando','desconfiada','brava','triste','apaixonada','acenando','cochichando','comemorando'];
+const ler=k=>{try{return localStorage.getItem(k)}catch(e){return null}},guardar=(k,x)=>{try{localStorage.setItem(k,x)}catch(e){}};
+const modoAtual=()=>document.body.dataset.modo;
+let stream=null,rostos=[],dims={w:1,h:1},textoAtual='',som=ler('som')!=='0',exprAtual='',exprFixa=null,fixaAte=0,tempo=null,ultimoMov=Date.now(),docaAte=0,sessao=null,fechaSessao=null,arrastando=false,chegando=0,audio=null,fila=[],emConversa=false,falando=false,ultimaFala=null,ultimoTs=0,cortar=false,parar=null,jaDisse='',nomesAgora='';
+EXPR.forEach(n=>{new Image().src='/expressao/'+n});
+function mostrar(n){
+  if(n===exprAtual)return;exprAtual=n;
+  const nova=$('a').classList.contains('on')?$('b'):$('a'),velha=nova===$('a')?$('b'):$('a');
+  nova.onload=()=>{nova.classList.add('on');velha.classList.remove('on')};nova.src='/expressao/'+n;
+}
+function aviso(t){$('aviso').textContent=t;$('aviso').classList.toggle('on',!!t)}
+function modo(m){document.body.dataset.modo=m;document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));guardar('modo',m)}
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>modo(b.dataset.m));
+modo(ler('modo')||'canto');
+function mostraSom(){$('som').textContent=som?'Som ligado':'Som desligado';$('som').classList.toggle('on',som)}
+mostraSom();
+$('som').onclick=()=>{som=!som;guardar('som',som?'1':'0');mostraSom();if(!som&&audio)audio.pause()};
+$('cheia').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+document.addEventListener('fullscreenchange',()=>{$('cheia').textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia'});
+function piscar(){const f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
+$('doca').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;b.classList.remove('clicou');void b.offsetWidth;b.classList.add('clicou')});
+$('ver').onclick=()=>{piscar();$('ver').disabled=true;$('ver').textContent='Olhando…';fetch('/ver',{method:'POST'})};
+$('chegada').onclick=async()=>{$('chegada').disabled=true;$('chegada').textContent='Chegando…';chegando=Date.now()+4000;await fetch('/chegada',{method:'POST'})};
+$('sheep').onclick=()=>{if(modoAtual()==='camera')modo('canto')};
+cam.ondblclick=()=>modo(modoAtual()==='camera'?'canto':'camera');
+const lim=(x,a,b)=>Math.max(a,Math.min(b,x));
+function encaixa(l,t,w,h){
+  w=lim(w,180,innerWidth-16);h=lim(h,100,innerHeight-16);l=lim(l,8,innerWidth-w-8);t=lim(t,8,innerHeight-h-8);
+  Object.assign(cam.style,{left:l+'px',top:t+'px',width:w+'px',height:h+'px'});guardar('caixa',JSON.stringify([l,t,w,h]));
+}
+const caixa=ler('caixa');if(caixa)try{const [l,t,w,h]=JSON.parse(caixa);encaixa(l,t,w,h)}catch(e){}
+addEventListener('resize',()=>{const r=cam.getBoundingClientRect();if(modoAtual()==='canto')encaixa(r.left,r.top,r.width,r.height)});
+function arrastar(ev,mover){
+  if(modoAtual()!=='canto')return;
+  ev.preventDefault();ev.stopPropagation();arrastando=true;cam.classList.add('movendo');
+  const r=cam.getBoundingClientRect(),x0=ev.clientX,y0=ev.clientY,alvo=ev.currentTarget;alvo.setPointerCapture(ev.pointerId);
+  const mov=e=>{const dx=e.clientX-x0,dy=e.clientY-y0;if(mover)encaixa(r.left+dx,r.top+dy,r.width,r.height);else{const w=r.width+dx;encaixa(r.left,r.top,w,w*9/16)}};
+  const fim=()=>{arrastando=false;cam.classList.remove('movendo');alvo.removeEventListener('pointermove',mov);alvo.removeEventListener('pointerup',fim);alvo.removeEventListener('pointercancel',fim)};
+  alvo.addEventListener('pointermove',mov);alvo.addEventListener('pointerup',fim);alvo.addEventListener('pointercancel',fim);
+}
+cam.addEventListener('pointerdown',e=>arrastar(e,true));
+$('alca').addEventListener('pointerdown',e=>arrastar(e,false));
+function mostraDoca(ms){docaAte=Date.now()+ms;document.body.classList.remove('semdoca')}
+addEventListener('pointermove',e=>{ultimoMov=Date.now();document.body.classList.remove('quieto');if(e.clientY>innerHeight-130)mostraDoca(3000)});
+sel.addEventListener('pointerdown',()=>mostraDoca(10000));
+mostraDoca(4000);
+setInterval(()=>{const a=Date.now();if(a>docaAte&&!arrastando){document.body.classList.add('semdoca');sel.blur()}if(a-ultimoMov>4000&&!arrastando)document.body.classList.add('quieto')},300);
+addEventListener('keydown',e=>{if(e.target===sel)return;const k=e.key.toLowerCase();if(k==='1')modo('canto');if(k==='2')modo('camera');if(k==='3')modo('so');if(k==='f')$('cheia').click();if(k==='c')$('chegada').click();if(k==='v')$('ver').click();if(k==='t')$('papo').click()});
+async function abrir(id){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:id?{deviceId:{exact:id},width:{ideal:1280},height:{ideal:720}}:{width:{ideal:1280},height:{ideal:720}}});
+    v.srcObject=stream;aviso('');
+  }catch(e){
+    stream=null;
+    aviso(e.name==='NotAllowedError'?'Libere a câmera no cadeado ao lado do endereço e recarregue.':e.name==='NotReadableError'?'Essa câmera está em uso por outro programa. Feche ele ou escolha outra.':'Não abriu a câmera: '+e.message);
+    throw e;
+  }
+}
+const curto=l=>(l||'Câmera').replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i,'');
+async function listar(){
+  const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'),atual=sel.value;
+  sel.innerHTML='';devs.forEach(d=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=curto(d.label);sel.appendChild(o)});
+  return {devs,atual};
+}
+function preferida(devs){
+  const salvo=devs.find(d=>d.deviceId===ler('cam'));if(salvo)return salvo;
+  const fora=devs.filter(d=>!/integrated|integrada|built.?in|virtual|obs|facetime|droidcam/i.test(d.label));
+  return fora.find(d=>/emeet/i.test(d.label))||fora[0]||devs[0];
+}
+async function iniciar(){
+  await abrir(null);
+  const {devs}=await listar(),esc=preferida(devs);
+  if(esc){sel.value=esc.deviceId;await abrir(esc.deviceId)}
+}
+sel.onchange=()=>{guardar('cam',sel.value);sel.blur();abrir(sel.value).catch(()=>{})};
+navigator.mediaDevices.addEventListener('devicechange',async()=>{const {atual}=await listar();if([...sel.options].some(o=>o.value===atual))sel.value=atual;else if(sel.options.length){sel.selectedIndex=0;abrir(sel.value).catch(()=>{})}});
+function desenhar(){
+  c.width=c.clientWidth;c.height=c.clientHeight;ctx.clearRect(0,0,c.width,c.height);
+  const s=Math.min(c.width/dims.w,c.height/dims.h),ox=(c.width-dims.w*s)/2,oy=(c.height-dims.h*s)/2,fs=lim(Math.round(c.width/36),12,26);
+  rostos.forEach(r=>{
+    const [x1,y1,x2,y2]=r.bbox,xa=dims.w-x2,xb=dims.w-x1,X=ox+xa*s,Y=oy+y1*s,W=(xb-xa)*s,H=(y2-y1)*s,cor=r.nome?'#4fd27a':'#C8102E',rot=r.rotulo||'Quem é?';
+    ctx.lineWidth=3;ctx.strokeStyle=cor;ctx.strokeRect(X,Y,W,H);ctx.font=`700 ${fs}px "Segoe UI"`;
+    const py=Math.max(0,Y-fs-10);ctx.fillStyle=cor;ctx.fillRect(X,py,ctx.measureText(rot).width+14,fs+10);ctx.fillStyle='#121011';ctx.fillText(rot,X+7,py+fs+1);
+  });
+}
+function falarTexto(t){clearInterval(tempo);let i=0;$('fala').textContent='';tempo=setInterval(()=>{$('fala').textContent=t.slice(0,++i);if(i>=t.length)clearInterval(tempo)},22)}
+function falar(a){
+  if(emConversa||a.ts===ultimoTs)return;ultimoTs=a.ts;falarTexto(a.texto);
+  if(a.audio&&a.audio!==ultimaFala&&!falando){ultimaFala=a.audio;if(som)tocar('/fala/'+a.audio+'.mp3')}
+}
+const espera=ms=>new Promise(ok=>setTimeout(ok,ms));
+function tocar(url){
+  return new Promise(ok=>{
+    if(!som)return setTimeout(ok,5000);
+    if(audio)audio.pause();
+    falando=true;audio=new Audio(url);
+    const fim=()=>{clearTimeout(t);falando=false;parar=null;ok()},t=setTimeout(fim,30000);
+    parar=()=>{audio.pause();fim()};audio.onended=fim;audio.onerror=fim;
+    audio.play().catch(()=>{aviso('Clique em qualquer lugar da tela para liberar o som.');fim()});
+  });
+}
+function mostraPapo(){$('papo').disabled=false;$('papo').textContent=sessao?'Encerrar conversa':'Conversar';$('papo').classList.toggle('on',!!sessao)}
+async function conversar(pessoa,jaDisse,primeira){
+  if(sessao||!window.Conversation)return null;
+  $('papo').disabled=true;$('papo').textContent='Conectando…';
+  const {url}=await (await fetch('/convai/url')).json();
+  if(!url){mostraPapo();return null}
+  let ultimo=Date.now(),falou=false;const comeco=Date.now();
+  return new Promise(async ok=>{
+    let vigia=null,feito=false;
+    const fim=()=>{if(feito)return;feito=true;clearInterval(vigia);const s=sessao;sessao=null;fechaSessao=null;mostraPapo();$('pessoaNome').textContent=nomesAgora;fixaAte=0;if(s)s.endSession().catch(()=>{});ok({falou})};
+    fechaSessao=fim;
+    try{
+      sessao=await Conversation.startSession({signedUrl:url,connectionType:'websocket',dynamicVariables:{pessoa,ja_disse:jaDisse||'nada ainda'},
+        overrides:primeira?{agent:{firstMessage:primeira}}:undefined,
+        onMessage:m=>{ultimo=Date.now();const ia=m.source==='ai'||m.role==='agent';if(ia&&m.message){textoAtual=m.message;falarTexto(m.message)}else if(!ia)falou=true},
+        onModeChange:({mode})=>{ultimo=Date.now();exprFixa=mode==='speaking'?'feliz':'neutra';fixaAte=Date.now()+20000;$('pessoaNome').textContent=mode==='speaking'?nomesAgora:'Ouvindo…'},
+        onDisconnect:fim,onError:fim});
+      mostraPapo();$('pessoaNome').textContent='Ouvindo…';$('pessoa').classList.add('on');
+      vigia=setInterval(()=>{const a=Date.now();if(a-ultimo>14000||a-comeco>150000||(fila.length&&a-ultimo>3000))fim()},3000);
+    }catch(e){aviso('Não abriu a conversa: libere o microfone no cadeado ao lado do endereço.');setTimeout(()=>aviso(''),5000);fim()}
+  });
+}
+$('papo').onclick=async()=>{
+  if(fechaSessao)return fechaSessao();
+  if(emConversa){cortar=true;fila.length=0;if(parar)parar();while(emConversa)await espera(100)}
+  const rot=nomesAgora||'alguém da turma';
+  emConversa=true;
+  const r=await conversar(rot,jaDisse,`Oi, ${rot}! Pode falar comigo.`).catch(()=>null);
+  mostraPapo();
+  if(!r){aviso('Agente de voz indisponível agora.');setTimeout(()=>aviso(''),4000)}
+  emConversa=false;atende();
+};
+async function recebe(nome){
+  const falas=await (await fetch('/roteiro/'+encodeURIComponent(nome))).json();
+  jaDisse=falas.map(f=>f.texto).join(' ');
+  for(let i=0;i<falas.length&&!cortar;i++){
+    exprFixa=falas[i].expressao;fixaAte=Date.now()+60000;falarTexto(falas[i].texto);
+    await tocar(falas[i].audio);
+    if(i===0&&fila.length>1)break;
+    if(i===1&&!cortar)await espera(4000);
+  }
+  fixaAte=0;
+}
+async function atende(){
+  if(emConversa)return;emConversa=true;cortar=false;
+  while(fila.length)await recebe(fila.shift());
+  emConversa=false;
+  setTimeout(()=>{if(!emConversa)$('fala').textContent=''},4000);
+}
+function saudar(nome){fila.push(nome);atende()}
+document.addEventListener('pointerdown',()=>{if($('aviso').textContent.startsWith('Clique'))aviso('')});
+async function laco(){
+  if(v.videoWidth&&stream){
+    const W=640,H=Math.round(640*v.videoHeight/v.videoWidth);grab.width=W;grab.height=H;grab.getContext('2d').drawImage(v,0,0,W,H);
+    const blob=await new Promise(r=>grab.toBlob(r,'image/jpeg',.8));
+    try{
+      const res=await (await fetch('/quadro',{method:'POST',body:blob})).json();
+      rostos=res.rostos;dims={w:res.w,h:res.h};
+      const nomes=rostos.map(r=>r.rotulo||'Alguém novo');nomesAgora=nomes.join(', ');if($('pessoaNome').textContent!=='Ouvindo…')$('pessoaNome').textContent=nomesAgora;$('pessoa').classList.toggle('on',nomes.length>0||$('pessoaNome').textContent==='Ouvindo…');
+      falar(res.agente);
+      if(res.tocar)saudar(res.tocar);
+      if(!res.agente.pensando&&$('ver').disabled){$('ver').disabled=false;$('ver').textContent='O que está vendo?'}
+      if(chegando&&(res.tocar||Date.now()>chegando)){if(!res.tocar)aviso('Fica na frente da câmera e clica de novo.');setTimeout(()=>{if(!res.tocar)aviso('')},3000);chegando=0;$('chegada').disabled=false;$('chegada').textContent='Simular chegada'}
+      mostrar(Date.now()<fixaAte?exprFixa:res.agente.pensando?'pensando':(res.agente.expressao||'neutra'));
+    }catch(e){}
+  }
+  setTimeout(laco,200);
+}
+mostrar('neutra');
+(function anim(){if(modoAtual()!=='so')desenhar();requestAnimationFrame(anim)})();
+iniciar().catch(()=>{}).finally(laco);
+</script>
+</body>
+</html>

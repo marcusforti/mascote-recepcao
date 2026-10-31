@@ -1,0 +1,12 @@
+{
+ "nome": "Mascote",
+ "personalidade": "Descreva aqui o jeito do seu mascote: quem é, como fala, que tipo de piada faz.",
+ "visual": "Describe your character here in English: species, colors, clothes, details that must stay the same in every image.",
+ "voz_id": "COLE_AQUI_O_ID_DA_VOZ",
+ "modelo_voz": "eleven_v4",
+ "ajustes_voz": {"stability": 0.3, "similarity_boost": 0.8, "style": 0.55},
+ "porta": 7460,
+ "limiar": 0.4,
+ "rotulos": {"Joao": "João"},
+ "pronuncia": {}
+}
